@@ -12,6 +12,10 @@ class ServerlessPlugin {
       this.serverless.service.provider.environment || {}
     this.config =
       this.serverless.service.custom && this.serverless.service.custom['dotenv']
+    this.logLevel = 
+      this.config && typeof this.config.logLevel !== 'undefined' ? 
+        this.config.logLevel : 
+        2;
 
     this.loadEnv(this.getEnvironment(options))
   }
@@ -53,9 +57,11 @@ class ServerlessPlugin {
       }
 
       if (envVars) {
-        this.serverless.cli.log(
-          'DOTENV: Loading environment variables from ' + envFileName + ':'
-        )
+        if (this.logLevel > 0) {
+          this.serverless.cli.log(
+            'dotenv: Loading environment variables from ' + envFileName + ':'
+          )
+        }
         if (include) {
           Object.keys(envVars)
             .filter(key => !include.includes(key))
@@ -64,11 +70,15 @@ class ServerlessPlugin {
             })
         }
         Object.keys(envVars).forEach(key => {
-          this.serverless.cli.log('\t - ' + key)
+          if (this.logLevel > 1) {
+            this.serverless.cli.log('\t - ' + key)
+          }
           this.serverless.service.provider.environment[key] = envVars[key]
         })
       } else {
-        this.serverless.cli.log('DOTENV: Could not find .env file.')
+        if (this.logLevel > 0) {
+          this.serverless.cli.log('dotenv: Could not find .env file.')
+        }
       }
     } catch (e) {
       console.error(
